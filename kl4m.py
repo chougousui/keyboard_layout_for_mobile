@@ -1,43 +1,51 @@
 import numpy as np
 import time
+WORKMAN_LAYOUT = "qdrwbjfup;ashtgyneoizxmcvkl"
+QWERTY_LAYOUT = "qwertyuiopasdfghjkl;zxcvbnm"
 
 
 def main():
-    key_position = get_position_from_string("qdrwbjfup;ashtgyneoizxmcvkl")
-
     # load article file
     f = open("data/historyTime.txt", "r")
-    article = f.read()
+    article = f.read().lower()
     f.close()
-    article = article.lower()
+
+    cost_matrix = get_cost_matrix()
+
+    key_indexes = get_indexes_from_string(WORKMAN_LAYOUT)
 
     # count
-    last_pos = [44 * 1, 77 * 5]
+    last_index = 15
     total_distance = 0
 
     for c in article:
-        if c in key_position:
-            pos1 = key_position[c]
-            total_distance += distance(pos1, last_pos)
-            last_pos = pos1
+        if c in key_indexes:
+            index = key_indexes[c]
+            total_distance += cost_matrix[last_index][index]
+            last_index = index
 
     return total_distance
 
 
-def distance(pos1, pos2):
-    return np.linalg.norm(pos1 - pos2)
-
-
-def get_position_from_string(key_queue):
-    if len(key_queue) != 27:
+def get_indexes_from_string(key_queue):
+    # create a key map dictionary to speed up char addressing
+    if len(key_queue) > 27:
         print("string length not available.")
 
     key_position = dict()
-    for i in range(27):
-        key_char = key_queue[i];
-        key_position[key_char] = np.array([47 * (i // 10), 77 * (i % 10)])
+
+    for c in key_queue:
+        key_position[c] = key_queue.index(c)
 
     return key_position
+
+
+def get_cost_matrix():
+    def inner_func(i, j):
+        return np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2))
+
+    cost_matrix = np.fromfunction(inner_func, (27, 27))
+    return cost_matrix
 
 
 if __name__ == "__main__":
