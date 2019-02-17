@@ -1,40 +1,48 @@
 import numpy as np
-import json
-import sys
+import time
+
 
 def main():
-    argvs = sys.argv
-    article_name = argvs[1]
-
-    # load keymap file
-    f = open(article_name,"r")
-    keymap = json.load(f)
-    f.close()
+    key_position = get_position_from_string("qdrwbjfup;ashtgyneoizxmcvkl")
 
     # load article file
-    f = open("data/article.txt","r")
+    f = open("data/historyTime.txt", "r")
     article = f.read()
     f.close()
+    article = article.lower()
 
     # count
-    last_pos = position([1,5])
+    last_pos = [44 * 1, 77 * 5]
     total_distance = 0
 
     for c in article:
-        if c in keymap:
-            pos1 = position(keymap[c])
+        if c in key_position:
+            pos1 = key_position[c]
             total_distance += distance(pos1, last_pos)
             last_pos = pos1
 
     return total_distance
 
-def position(keyindex):
-    return np.array((47*keyindex[0],77*keyindex[1]))
 
 def distance(pos1, pos2):
     return np.linalg.norm(pos1 - pos2)
-    
+
+
+def get_position_from_string(key_queue):
+    if len(key_queue) != 27:
+        print("string length not available.")
+
+    key_position = dict()
+    for i in range(27):
+        key_char = key_queue[i];
+        key_position[key_char] = np.array([47 * (i // 10), 77 * (i % 10)])
+
+    return key_position
+
 
 if __name__ == "__main__":
+    start = time.time()
     result = main()
-    print(result)
+    print("distance: ", result)
+    end = time.time()
+    print("time cost: ", end - start)
