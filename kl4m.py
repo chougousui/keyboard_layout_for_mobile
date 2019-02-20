@@ -2,12 +2,11 @@ import numpy as np
 import time
 import re
 
-
 WORKMAN_LAYOUT = "qdrwbjfup;ashtgyneoizxmcvkl"
 QWERTY_LAYOUT = "qwertyuiopasdfghjkl;zxcvbnm"
 
-def main():
 
+def main():
     cost_dict = get_cost_dict()
     key_maps = get_indexes_from_string(WORKMAN_LAYOUT)
 
@@ -15,19 +14,30 @@ def main():
     f = open("data/historyTime.txt", "r")
     article = f.read().lower()
     f.close()
+
+    # remove non alphabet chars
     regex = re.compile('[^a-zA-Z]')
-    article = regex.sub('', article)
+    article_later = regex.sub('', article)
+    article_former = WORKMAN_LAYOUT[15] + article_later[:-1]
+
+    # index lists
+    article_former_array = map(lambda x: key_maps[x], article_former)
+    article_later_array = map(lambda x: key_maps[x], article_later)
+
+    # calculate all costs and then return
+    cost_array = map(lambda x, y: cost_dict[x][y], article_former_array, article_later_array)
+    return sum(cost_array)
 
     # count
-    last_index = 15
-    total_distance = 0
-
-    for c in article:
-        index = key_maps[c]
-        total_distance += cost_dict[last_index][index]
-        last_index = index
-
-    return total_distance
+    # last_index = 15
+    # total_distance = 0
+    #
+    # for c in article_later:
+    #     index = key_maps[c]
+    #     total_distance += cost_dict[last_index][index]
+    #     last_index = index
+    #
+    # return total_distance
 
 
 def get_indexes_from_string(key_queue):
