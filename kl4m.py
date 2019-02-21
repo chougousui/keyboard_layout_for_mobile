@@ -28,18 +28,6 @@ def main():
     cost_array = map(lambda x, y: cost_dict[x][y], article_former_array, article_later_array)
     return sum(cost_array)
 
-    # count
-    # last_index = 15
-    # total_distance = 0
-    #
-    # for c in article_later:
-    #     index = key_maps[c]
-    #     total_distance += cost_dict[last_index][index]
-    #     last_index = index
-    #
-    # return total_distance
-
-
 def get_indexes_from_string(key_queue):
     # create a key map dictionary to speed up char addressing
     if len(key_queue) > 27:
