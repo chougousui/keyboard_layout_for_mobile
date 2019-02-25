@@ -2,10 +2,17 @@ import numpy as np
 import re
 import time
 
+<<<<<<< HEAD
 LIVES = 20
 MAXG = 100
 OLD_P = 0.1
 CHANGE_P = 0.9
+=======
+LIVES = 30
+MAXG = 30
+OLD_P = 0.1
+CHANGE_P = 1.0
+>>>>>>> 4968e23e83c8e428564c3b05c01323f839d1b098
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
 article = None
@@ -105,6 +112,8 @@ def change_one(before):
     temp_list = list(before)
     indexes = np.random.choice(np.arange(27), 2)
     temp_list[indexes[0]], temp_list[indexes[1]] = temp_list[indexes[1]], temp_list[indexes[0]]
+    indexes = np.random.choice(np.arange(27), 2)
+    temp_list[indexes[0]], temp_list[indexes[1]] = temp_list[indexes[1]], temp_list[indexes[0]]
     return ''.join(temp_list)
 
 
@@ -133,7 +142,7 @@ def generate_new():
     crosses = np.array(crosses)
 
     for index in range(len(crosses)):
-        if np.random.random() < 0.4:
+        if np.random.random() < CHANGE_P:
             crosses[index] = change_one(crosses[index])
 
     all_genes = np.append(retains, crosses)
@@ -150,7 +159,6 @@ def ga():
 
         best = all_genes[np.argmax(all_probs)]
         print('the %s th time: %s %s' % (i, best, score_one(best)))
-
         generate_new()
     get_probabilities()
 
@@ -159,10 +167,14 @@ def ga():
 
 if __name__ == "__main__":
     start = time.time()
+
     try:
         ga()
     except KeyboardInterrupt:
         print("Interrupted")
+    finally:
         print(all_genes)
+
     end = time.time()
+
     print('time cost: %s' % (end - start))
