@@ -1,11 +1,13 @@
 import numpy as np
 import re
 import time
+import multiprocessing
 
-LIVES = 20
-MAXG = 100
+LIVES = 40
+MAXG = 5
 OLD_P = 0.1
 CHANGE_P = 0.9
+CORES = 4
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
 article = None
@@ -70,11 +72,23 @@ def score_one(layout_string):
     return total_distance / 10000
 
 
+def get_part_score(temp_all_genes, temp_all_scores, offset):
+    temp_all_scores[offset * LIVES // CORES: (offset + 1) * LIVES // CORES] = [score_one(x) for x in temp_all_genes[offset * LIVES // CORES: (offset + 1) * LIVES // CORES]]
+
+
 def get_probabilities():
     global all_probs
     global all_scores
 
-    all_scores = np.array([score_one(x) for x in all_genes])
+    temp_all_genes = multiprocessing.Manager().list(all_genes.tolist())
+    temp_all_scores = multiprocessing.Manager().list([1] * LIVES)
+
+    for i in range(CORES):
+        p = multiprocessing.Process(target=get_part_score, args=(temp_all_genes, temp_all_scores, i))
+        p.start()
+        p.join()
+
+    all_scores = np.array(temp_all_scores[:])
     scores = all_scores - all_scores.min() * 0.9
     scores = 1 / scores
     total_scores = sum(scores)
@@ -86,7 +100,7 @@ def get_probabilities():
 def cross_one(father, mother):
     father = np.array(list(father))
     mother = np.array(list(mother))
-    child = np.array(['']*27)
+    child = np.array([''] * 27)
     cross_length = 9
     high_set = frequencies[:cross_length]
     low_set = frequencies[cross_length:]
