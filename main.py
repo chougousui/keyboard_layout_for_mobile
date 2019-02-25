@@ -2,17 +2,10 @@ import numpy as np
 import re
 import time
 
-<<<<<<< HEAD
 LIVES = 20
 MAXG = 100
 OLD_P = 0.1
 CHANGE_P = 0.9
-=======
-LIVES = 30
-MAXG = 30
-OLD_P = 0.1
-CHANGE_P = 1.0
->>>>>>> 4968e23e83c8e428564c3b05c01323f839d1b098
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
 article = None
