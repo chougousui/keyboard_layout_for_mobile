@@ -2,10 +2,10 @@ import numpy as np
 import re
 import time
 
-LIVES = 50
-MAXG = 10
+LIVES = 20
+MAXG = 100
 OLD_P = 0.1
-CHANGE_P = 0.5
+CHANGE_P = 0.9
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
 article = None
@@ -63,6 +63,9 @@ def score_one(layout_string):
         index = key_maps[c]
         total_distance += cost_dict[last_index][index]
         last_index = index
+
+    if key_maps['e'] not in [15, 16, 17]:
+        total_distance += 5000000
 
     return total_distance / 10000
 
@@ -156,6 +159,10 @@ def ga():
 
 if __name__ == "__main__":
     start = time.time()
-    ga()
+    try:
+        ga()
+    except KeyboardInterrupt:
+        print("Interrupted")
+        print(all_genes)
     end = time.time()
     print('time cost: %s' % (end - start))
