@@ -4,26 +4,25 @@ import time
 import multiprocessing
 import sys
 
-OLD_P = 0.1
-CHANGE_P = 0.9
+REPRODUCTION_RATE = 0.1
+MUTATION_RATE = 0.9
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
-lives = 10
-maxg = 2
+population = 10
+iteration_limit = 2
 article = None
 frequencies = None
-keymaps = None
 cost_dict = None
-all_genes = None
-all_scores = None
-all_probs = None
+genotypes = None
+scores = None
+probabillities = None
 cores = 1
 pool = None
 
 
 def prepare_data():
-    global lives
-    global maxg
+    global population
+    global iteration_limit
     global article
     global cost_dict
     global frequencies
@@ -48,20 +47,20 @@ def prepare_data():
     cores = multiprocessing.cpu_count() - 1
     pool = multiprocessing.Pool(processes=cores)
 
-    lives = int(sys.argv[1])
-    maxg = int(sys.argv[2])
+    population = int(sys.argv[1])
+    iteration_limit = int(sys.argv[2])
 
     return
 
 
 def init_generation():
-    global all_genes
+    global genotypes
 
-    all_genes = np.array([TEMPLATE] * lives)
-    for i in range(lives):
+    genotypes = np.array([TEMPLATE] * population)
+    for i in range(population):
         indexes = np.random.permutation(27)
         life = ''.join([TEMPLATE[x] for x in indexes])
-        all_genes[i] = life
+        genotypes[i] = life
     return
 
 
@@ -86,19 +85,19 @@ def score_one(layout_string):
 
 
 def get_probabilities():
-    global all_probs
-    global all_scores
+    global probabillities
+    global scores
 
-    all_scores = np.array(list(pool.map(score_one, all_genes)))
-    scores = all_scores - all_scores.min() * 0.9
-    scores = 1 / scores
-    total_scores = sum(scores)
-    all_probs = np.array([x / total_scores for x in scores])
+    scores = np.array(list(pool.map(score_one, genotypes)))
+    adjusted_scores = scores - scores.min() * 0.9
+    adjusted_scores = 1 / adjusted_scores
+    total_scores = sum(adjusted_scores)
+    probabillities = np.array([x / total_scores for x in adjusted_scores])
 
     return
 
 
-def cross_one(father, mother):
+def crossover_one(father, mother):
     father = np.array(list(father))
     mother = np.array(list(mother))
     child = np.array(['']*27)
@@ -116,7 +115,7 @@ def cross_one(father, mother):
     return ''.join(child)
 
 
-def change_one(before):
+def mutation_one(before):
     temp_list = list(before)
     indexes = np.random.choice(np.arange(27), 2)
     temp_list[indexes[0]], temp_list[indexes[1]] = temp_list[indexes[1]], temp_list[indexes[0]]
@@ -128,32 +127,32 @@ def change_one(before):
 def rws():
     number_sum = 0
     temp = np.random.random()
-    for i in range(len(all_probs)):
-        number_sum += all_probs[i]
+    for i in range(len(probabillities)):
+        number_sum += probabillities[i]
         if number_sum > temp:
             return i
 
 
 def generate_new():
-    global all_genes
+    global genotypes
 
     crosses = []
 
-    top_excellent_index = np.argsort(all_probs)[::-1][:int(OLD_P * lives)]
-    retains = all_genes[top_excellent_index]
+    top_excellent_index = np.argsort(probabillities)[::-1][:int(REPRODUCTION_RATE * population)]
+    retains = genotypes[top_excellent_index]
 
-    for i in range(lives - len(retains)):
-        father = all_genes[rws()]
-        mother = all_genes[rws()]
-        child = cross_one(father, mother)
+    for i in range(population - len(retains)):
+        father = genotypes[rws()]
+        mother = genotypes[rws()]
+        child = crossover_one(father, mother)
         crosses.append(child)
     crosses = np.array(crosses)
 
     for index in range(len(crosses)):
-        if np.random.random() < CHANGE_P:
-            crosses[index] = change_one(crosses[index])
+        if np.random.random() < MUTATION_RATE:
+            crosses[index] = mutation_one(crosses[index])
 
-    all_genes = np.append(retains, crosses)
+    genotypes = np.append(retains, crosses)
     return
 
 
@@ -162,10 +161,10 @@ def ga():
     init_generation()
     print('inited')
 
-    for i in range(maxg):
+    for i in range(iteration_limit):
         get_probabilities()
 
-        best = all_genes[np.argmax(all_probs)]
+        best = genotypes[np.argmax(probabillities)]
         print('the %s th time: %s %s' % (i, best, score_one(best)))
         generate_new()
     get_probabilities()
@@ -181,7 +180,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Interrupted")
     finally:
-        print(all_genes)
+        print(genotypes)
 
     end = time.time()
 
