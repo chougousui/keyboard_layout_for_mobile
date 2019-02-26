@@ -2,14 +2,14 @@ import numpy as np
 import re
 import time
 import multiprocessing
+import sys
 
-LIVES = 40
-MAXG = 5
 OLD_P = 0.1
 CHANGE_P = 0.9
-CORES = 4
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
+lives = 10
+maxg = 2
 article = None
 frequencies = None
 keymaps = None
@@ -17,12 +17,18 @@ cost_dict = None
 all_genes = None
 all_scores = None
 all_probs = None
+cores = 1
+pool = None
 
 
 def prepare_data():
+    global lives
+    global maxg
     global article
     global cost_dict
     global frequencies
+    global cores
+    global pool
 
     f = open('data/historyTime.txt', 'r')
     file_content = f.read().lower()
@@ -38,14 +44,21 @@ def prepare_data():
         return np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2))
 
     cost_dict = np.fromfunction(inner_func, (27, 27))
+
+    cores = multiprocessing.cpu_count() - 1
+    pool = multiprocessing.Pool(processes=cores)
+
+    lives = int(sys.argv[1])
+    maxg = int(sys.argv[2])
+
     return
 
 
 def init_generation():
     global all_genes
 
-    all_genes = np.array([TEMPLATE] * LIVES)
-    for i in range(LIVES):
+    all_genes = np.array([TEMPLATE] * lives)
+    for i in range(lives):
         indexes = np.random.permutation(27)
         life = ''.join([TEMPLATE[x] for x in indexes])
         all_genes[i] = life
@@ -67,28 +80,16 @@ def score_one(layout_string):
         last_index = index
 
     if key_maps['e'] not in [15, 16, 17]:
-        total_distance += 5000000
+        total_distance *= 1.05
 
     return total_distance / 10000
-
-
-def get_part_score(temp_all_genes, temp_all_scores, offset):
-    temp_all_scores[offset * LIVES // CORES: (offset + 1) * LIVES // CORES] = [score_one(x) for x in temp_all_genes[offset * LIVES // CORES: (offset + 1) * LIVES // CORES]]
 
 
 def get_probabilities():
     global all_probs
     global all_scores
 
-    temp_all_genes = multiprocessing.Manager().list(all_genes.tolist())
-    temp_all_scores = multiprocessing.Manager().list([1] * LIVES)
-
-    for i in range(CORES):
-        p = multiprocessing.Process(target=get_part_score, args=(temp_all_genes, temp_all_scores, i))
-        p.start()
-        p.join()
-
-    all_scores = np.array(temp_all_scores[:])
+    all_scores = np.array(list(pool.map(score_one, all_genes)))
     scores = all_scores - all_scores.min() * 0.9
     scores = 1 / scores
     total_scores = sum(scores)
@@ -100,7 +101,7 @@ def get_probabilities():
 def cross_one(father, mother):
     father = np.array(list(father))
     mother = np.array(list(mother))
-    child = np.array([''] * 27)
+    child = np.array(['']*27)
     cross_length = 9
     high_set = frequencies[:cross_length]
     low_set = frequencies[cross_length:]
@@ -138,10 +139,10 @@ def generate_new():
 
     crosses = []
 
-    top_excellent_index = np.argsort(all_probs)[::-1][:int(OLD_P * LIVES)]
+    top_excellent_index = np.argsort(all_probs)[::-1][:int(OLD_P * lives)]
     retains = all_genes[top_excellent_index]
 
-    for i in range(LIVES - len(retains)):
+    for i in range(lives - len(retains)):
         father = all_genes[rws()]
         mother = all_genes[rws()]
         child = cross_one(father, mother)
@@ -161,7 +162,7 @@ def ga():
     init_generation()
     print('inited')
 
-    for i in range(MAXG):
+    for i in range(maxg):
         get_probabilities()
 
         best = all_genes[np.argmax(all_probs)]
