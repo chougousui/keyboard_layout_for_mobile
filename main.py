@@ -79,7 +79,9 @@ def score_one(layout_string):
         last_index = index
 
     if key_maps['e'] not in [15, 16, 17]:
-        total_distance *= 1.05
+        total_distance *= 1.03
+    if abs(key_maps['t'] - key_maps['h']) > 1:
+        total_distance *= 1.02
 
     return total_distance / 10000
 
@@ -101,7 +103,7 @@ def crossover_one(father, mother):
     father = np.array(list(father))
     mother = np.array(list(mother))
     child = np.array(['']*27)
-    cross_length = 9
+    cross_length = np.random.randint(26) + 1
     high_set = frequencies[:cross_length]
     low_set = frequencies[cross_length:]
     high_index = [i for i, val in enumerate(father) if val in high_set]
