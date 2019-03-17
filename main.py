@@ -47,7 +47,7 @@ def prepare_data():
     cores = multiprocessing.cpu_count() - 1
     pool = multiprocessing.Pool(processes=cores)
 
-    if len(sys.argv) > 0:
+    if len(sys.argv) > 1:
         population = int(sys.argv[1])
         iteration_limit = int(sys.argv[2])
 

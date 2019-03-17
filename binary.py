@@ -1,3 +1,4 @@
+# encoding: utf-8
 import numpy as np
 import re
 import multiprocessing as mp
@@ -5,9 +6,10 @@ import time
 import factoradic
 import bisect
 import sys
+import random
 
 TEMPLATE = ":abcdefghijklmnopqrstuvwxyz"
-
+MAX = np.math.factorial(27)
 
 class GA:
     def __init__(self, count):
@@ -24,10 +26,6 @@ class GA:
             lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
             (27, 27))
 
-        word_freq = [self.article.count(c) for c in ':abcdefghijklmnopqrstuvwxyz']
-        word_rank = np.argsort(word_freq)[::-1]
-        self.frequencies = np.array(list(':abcdefghijklmnopqrstuvwxyz'))[word_rank].tolist()
-
         self.probabilities = None
 
         cores = mp.cpu_count() - 1
@@ -37,36 +35,42 @@ class GA:
         return np.array([self.gen_chromosome() for i in range(count)])
 
     def gen_chromosome(self):
-        indexes = np.random.permutation(27)
-        return ''.join([TEMPLATE[x] for x in indexes])
+        chromosome = 0
+        for i in range(94):
+            chromosome |= (1 << i) * random.randint(0, 1)
+        return chromosome
 
     def evolve(self, retain_rate=0.2, mutation_rate=0.1):
         parents = self.selection(retain_rate)
         best = self.population[np.argmax(self.probabilities)]
-        print('the %s th time: %s %s' % (i, best, self.score_one(best)))
+        print('the %s th time: %s %s' % (i, self.decoding(best), self.score_one(best)))
 
         self.crossover(parents)
         self.mutation(mutation_rate)
 
-    def score_one(self, layout_string):
-        key_maps = {val: i for i, val in enumerate(layout_string)}
+    def score_one(self, chromosome):
+        if chromosome >= MAX:
+            return 8000
+        else:
+            layout_string = self.decoding(chromosome)
+            key_maps = {val: i for i, val in enumerate(layout_string)}
 
-        last_index = 15
-        total_distance = 0
+            last_index = 15
+            total_distance = 0
 
-        for c in self.article:
-            index = key_maps[c]
-            total_distance += self.cost_dict[last_index][index]
-            last_index = index
+            for c in self.article:
+                index = key_maps[c]
+                total_distance += self.cost_dict[last_index][index]
+                last_index = index
 
-        if key_maps['e'] not in [15, 16, 17]:
-            total_distance *= 1.03
-        if abs(key_maps['t'] - key_maps['h']) > 1:
-            total_distance *= 1.02
-        if key_maps[':'] not in [0,9,10,19]:
-            total_distance *= 1.02
+            if key_maps['e'] not in [15, 16, 17]:
+                total_distance *= 1.03
+            if abs(key_maps['t'] - key_maps['h']) > 1:
+                total_distance *= 1.02
+            if key_maps[':'] not in [0,9,10,19]:
+                total_distance *= 1.02
 
-        return total_distance / 10000
+            return total_distance / 10000
 
     def selection(self, reproduction_rate):
         scores = np.array(list(self.pool.map(self.score_one, self.population)))
@@ -89,21 +93,15 @@ class GA:
                 return i
 
     def crossover_one(self, father, mother):
-        father = np.array(list(father))
-        mother = np.array(list(mother))
-        child = np.array([''] * 27)
-        cross_length = np.random.randint(26) + 1
-        high_set = self.frequencies[:cross_length]
-        low_set = self.frequencies[cross_length:]
-        high_index = [i for i, val in enumerate(father) if val in high_set]
-        low_index = [i for i, val in enumerate(mother) if val in low_set]
-        child[high_index] = father[high_index]
-        child[low_index] = mother[low_index]
-        left_list = np.array([i for i in TEMPLATE if i not in child])
-        space_index = [i for i, val in enumerate(child) if val == '']
-        child[space_index] = left_list
+        cross_pos = random.randint(0, 94)
+        # 生成掩码，方便位操作
+        mask = 0
+        for i in range(cross_pos):
+            mask |= (1 << i)
+            # 孩子将获得父亲在交叉点前的基因和母亲在交叉点后（包括交叉点）的基因
+        child = ((father & mask) | (mother & ~mask)) & ((1 << 94) - 1)
 
-        return ''.join(child)
+        return child
 
     def crossover(self, parents):
         children = []
@@ -114,16 +112,13 @@ class GA:
             children.append(child)
         self.population = np.append(parents, children)
 
-    def mutation_one(self, layout_string):
-        temp_list = list(layout_string)
-        indexes = np.random.choice(np.arange(27), 2)
-        temp_list[indexes[0]], temp_list[indexes[1]] = temp_list[indexes[1]], temp_list[indexes[0]]
-        indexes = np.random.choice(np.arange(27), 2)
-        temp_list[indexes[0]], temp_list[indexes[1]] = temp_list[indexes[1]], temp_list[indexes[0]]
-        return ''.join(temp_list)
+    def mutation_one(self, chromosome):
+        j = random.randint(0, 94-1)
+        new = chromosome ^ 1 << j
+        return new
 
     def mutation(self, rate):
-        for index in range(self.count):
+        for index in range(5, self.count):
             if np.random.random() < rate:
                 self.population[index] = self.mutation_one(self.population[index])
 
@@ -139,11 +134,14 @@ class GA:
     #     new_strings = list(layout_string)[::-1]
     #     temp = []
     #     return factoradic.from_factoradic([bisect.insort(temp, c) or temp.index(c) for c in new_strings])
-    #
-    # def decoding(self, chromosome):
-    #     new_numbers = (factoradic.to_factoradic(number) + [0] * 27)[:27][::-1]
-    #     temp = list(TEMPLATE)
-    #     return [temp.pop(i) for i in new_numbers]
+
+    def decoding(self, chromosome):
+        if chromosome >= MAX:
+            return TEMPLATE
+        else:
+            new_numbers = (factoradic.to_factoradic(chromosome) + [0] * 27)[:27][::-1]
+            temp = list(TEMPLATE)
+            return "".join([temp.pop(i) for i in new_numbers])
 
 
 if __name__ == '__main__':
