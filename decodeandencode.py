@@ -1,6 +1,6 @@
-import numpy as np
 import factoradic
 import bisect
+import numpy as np
 
 TEMPLATE = ':abcdefghijklmnopqrstuvwxyz'
 
@@ -23,7 +23,7 @@ def list2seq(mylist):
 
 
 if __name__ == "__main__":
-    result = seq2list(1)
+    result = seq2list(np.math.factorial(27)-np.math.factorial(24))
     print(result)
     result = list2seq(list(':abcdefghijklmnopqrstuvwxzy'))
     print(result)

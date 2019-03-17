@@ -8,14 +8,14 @@ REPRODUCTION_RATE = 0.1
 MUTATION_RATE = 0.9
 TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
 
-population = 10
-iteration_limit = 2
+population = 50
+iteration_limit = 50
 article = None
 frequencies = None
 cost_dict = None
 genotypes = None
 scores = None
-probabillities = None
+probabilities = None
 cores = 1
 pool = None
 
@@ -47,8 +47,9 @@ def prepare_data():
     cores = multiprocessing.cpu_count() - 1
     pool = multiprocessing.Pool(processes=cores)
 
-    population = int(sys.argv[1])
-    iteration_limit = int(sys.argv[2])
+    if len(sys.argv) > 0:
+        population = int(sys.argv[1])
+        iteration_limit = int(sys.argv[2])
 
     return
 
@@ -65,10 +66,7 @@ def init_generation():
 
 
 def score_one(layout_string):
-    key_maps = dict()
-
-    for c in layout_string:
-        key_maps[c] = layout_string.index(c)
+    key_maps = {val: i for i, val in enumerate(layout_string)}
 
     last_index = 15
     total_distance = 0
@@ -87,14 +85,14 @@ def score_one(layout_string):
 
 
 def get_probabilities():
-    global probabillities
+    global probabilities
     global scores
 
     scores = np.array(list(pool.map(score_one, genotypes)))
     adjusted_scores = scores - scores.min() * 0.9
     adjusted_scores = 1 / adjusted_scores
     total_scores = sum(adjusted_scores)
-    probabillities = np.array([x / total_scores for x in adjusted_scores])
+    probabilities = np.array([x / total_scores for x in adjusted_scores])
 
     return
 
@@ -129,8 +127,8 @@ def mutation_one(before):
 def rws():
     number_sum = 0
     temp = np.random.random()
-    for i in range(len(probabillities)):
-        number_sum += probabillities[i]
+    for i in range(len(probabilities)):
+        number_sum += probabilities[i]
         if number_sum > temp:
             return i
 
@@ -140,7 +138,7 @@ def generate_new():
 
     crosses = []
 
-    top_excellent_index = np.argsort(probabillities)[::-1][:int(REPRODUCTION_RATE * population)]
+    top_excellent_index = np.argsort(probabilities)[::-1][:int(REPRODUCTION_RATE * population)]
     retains = genotypes[top_excellent_index]
 
     for i in range(population - len(retains)):
@@ -166,7 +164,7 @@ def ga():
     for i in range(iteration_limit):
         get_probabilities()
 
-        best = genotypes[np.argmax(probabillities)]
+        best = genotypes[np.argmax(probabilities)]
         print('the %s th time: %s %s' % (i, best, score_one(best)))
         generate_new()
     get_probabilities()
