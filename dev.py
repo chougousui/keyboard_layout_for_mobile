@@ -69,24 +69,13 @@ class GA:
         return total_distance / 10000
 
     def selection(self, reproduction_rate):
+        parents = []
         scores = np.array(list(self.pool.map(self.score_one, self.population)))
-        adjusted_scores = scores - scores.min() * 0.9
-        adjusted_scores = 1 / adjusted_scores
-        total_scores = sum(adjusted_scores)
-        self.probabilities = np.array([x / total_scores for x in adjusted_scores])
-
-        top_excellent_index = np.argsort(self.probabilities)[::-1][:int(reproduction_rate * self.count)]
-        parents = self.population[top_excellent_index]
-
-        return parents
-
-    def rws(self):
-        number_sum = 0
-        temp = np.random.random()
-        for i in range(len(self.probabilities)):
-            number_sum += self.probabilities[i]
-            if number_sum >= temp:
-                return i
+        for i in range(int(reproduction_rate * self.count)):
+            index = np.random.randint(0, self.count, size=int(self.count/10.0))
+            _, winner = min(zip(scores[index], self.population[index]))
+            parents.append(winner)
+        return np.array(parents)
 
     def crossover_one(self, father, mother):
         father = np.array(list(father))
@@ -108,8 +97,8 @@ class GA:
     def crossover(self, parents):
         children = []
         for i in range(self.count - len(parents)):
-            father = self.population[self.rws()]
-            mother = self.population[self.rws()]
+            father = np.random.choice(parents)
+            mother = np.random.choice(parents)
             child = self.crossover_one(father, mother)
             children.append(child)
         self.population = np.append(parents, children)
