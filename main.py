@@ -39,10 +39,9 @@ def prepare_data():
     word_rank = np.argsort(word_freq)[::-1]
     frequencies = np.array(list('abcdefghijklmnopqrstuvwxyz:'))[word_rank].tolist()
 
-    def inner_func(i, j):
-        return np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2))
-
-    cost_dict = np.fromfunction(inner_func, (27, 27))
+    cost_dict = np.delete(np.delete(np.fromfunction(
+        lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
+        (28, 28)), 20, axis=0), 20, axis=1)
 
     cores = multiprocessing.cpu_count() - 1
     pool = multiprocessing.Pool(processes=cores)

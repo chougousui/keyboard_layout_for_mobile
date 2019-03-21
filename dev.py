@@ -20,9 +20,9 @@ class GA:
         regex = re.compile('[^a-zA-Z:]')
         self.article = regex.sub('', file_content)
 
-        self.cost_dict = np.fromfunction(
+        self.cost_dict = np.delete(np.delete(np.fromfunction(
             lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
-            (27, 27))
+            (28, 28)), 20, axis=0), 20, axis=1)
 
         word_freq = [self.article.count(c) for c in ':abcdefghijklmnopqrstuvwxyz']
         word_rank = np.argsort(word_freq)[::-1]
