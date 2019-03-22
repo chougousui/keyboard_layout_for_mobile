@@ -5,8 +5,9 @@ import time
 import factoradic
 import bisect
 import sys
+import collections
 
-TEMPLATE = ":abcdefghijklmnopqrstuvwxyz"
+TEMPLATE = ";abcdefghijklmnopqrstuvwxyz"
 
 
 class GA:
@@ -17,21 +18,23 @@ class GA:
         f = open('data/historyTime.txt', 'r')
         file_content = f.read().lower()
         f.close()
-        regex = re.compile('[^a-zA-Z:]')
+        regex = re.compile('[^a-zA-Z;]')
         self.article = regex.sub('', file_content)
 
         self.cost_dict = np.delete(np.delete(np.fromfunction(
             lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
             (28, 28)), 20, axis=0), 20, axis=1)
 
-        word_freq = [self.article.count(c) for c in ':abcdefghijklmnopqrstuvwxyz']
+        word_freq = [self.article.count(c) for c in TEMPLATE]
         word_rank = np.argsort(word_freq)[::-1]
-        self.frequencies = np.array(list(':abcdefghijklmnopqrstuvwxyz'))[word_rank].tolist()
+        self.frequencies = np.array(list(TEMPLATE))[word_rank].tolist()
 
         self.probabilities = None
 
         cores = mp.cpu_count() - 1
         self.pool = mp.Pool(processes=cores)
+
+        self.cheat_sheet = collections.deque(maxlen=count)
 
     def gen_population(self, count):
         return np.array([self.gen_chromosome() for i in range(count)])
@@ -63,14 +66,22 @@ class GA:
             total_distance *= 1.03
         if abs(key_maps['t'] - key_maps['h']) > 1:
             total_distance *= 1.02
-        if key_maps[':'] not in [0,9,10,19]:
+        if key_maps[';'] not in [0,9,10,19]:
             total_distance *= 1.02
 
         return total_distance / 10000
 
+    def score_one_out(self, layout_string):
+        if layout_string in dict(self.cheat_sheet):
+            return dict(self.cheat_sheet)[layout_string]
+        else :
+            score = self.score_one(layout_string)
+            self.cheat_sheet.append([layout_string,score])
+            return score
+
     def selection(self, reproduction_rate):
         parents = []
-        scores = np.array(list(self.pool.map(self.score_one, self.population)))
+        scores = np.array(list(self.pool.map(self.score_one_out, self.population)))
         for i in range(int(reproduction_rate * self.count)):
             index = np.random.randint(0, self.count, size=int(self.count/10.0))
             _, winner = min(zip(scores[index], self.population[index]))
