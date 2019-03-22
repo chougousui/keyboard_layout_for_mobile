@@ -12,7 +12,7 @@ def init():
     f = open('data/historyTime.txt', 'r')
     file_content = f.read().lower()
     f.close()
-    regex = re.compile('[^a-zA-Z:]')
+    regex = re.compile('[^a-zA-Z;]')
     article = regex.sub('', file_content)
 
     cost_dict = np.delete(np.delete(np.fromfunction(
@@ -35,7 +35,7 @@ def score_one(layout_string):
         total_distance *= 1.03
     if abs(key_maps['t'] - key_maps['h']) > 1:
         total_distance *= 1.02
-    if key_maps[':'] not in [0, 9, 10, 19]:
+    if key_maps[';'] not in [0, 9, 10, 19]:
         total_distance *= 1.02
 
     return total_distance / 10000
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     init()
     f = open('known_solutions.txt', 'r')
     for line in f.readlines():
-        regex = re.compile('[^a-zA-Z:]')
+        regex = re.compile('[^a-zA-Z;]')
         line = regex.sub('', line)
         score = score_one(line)
         myprint(line)

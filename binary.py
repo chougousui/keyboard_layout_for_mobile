@@ -8,7 +8,7 @@ import bisect
 import sys
 import random
 
-TEMPLATE = ":abcdefghijklmnopqrstuvwxyz"
+TEMPLATE = ";abcdefghijklmnopqrstuvwxyz"
 MAX = np.math.factorial(27)
 
 class GA:
@@ -19,7 +19,7 @@ class GA:
         f = open('data/historyTime.txt', 'r')
         file_content = f.read().lower()
         f.close()
-        regex = re.compile('[^a-zA-Z:]')
+        regex = re.compile('[^a-zA-Z;]')
         self.article = regex.sub('', file_content)
 
         self.cost_dict = np.delete(np.delete(np.fromfunction(
@@ -67,7 +67,7 @@ class GA:
                 total_distance *= 1.03
             if abs(key_maps['t'] - key_maps['h']) > 1:
                 total_distance *= 1.02
-            if key_maps[':'] not in [0,9,10,19]:
+            if key_maps[';'] not in [0,9,10,19]:
                 total_distance *= 1.02
 
             return total_distance / 10000

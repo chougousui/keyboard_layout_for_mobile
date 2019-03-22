@@ -107,11 +107,14 @@ class GA:
 
     def crossover(self, parents):
         children = []
-        for i in range(self.count - len(parents)):
-            father = np.random.choice(parents)
-            mother = np.random.choice(parents)
-            child = self.crossover_one(father, mother)
-            children.append(child)
+        unique_parent = np.unique(parents)
+        while len(children) < (self.count - len(parents)):
+            father = np.random.choice(unique_parent)
+            mother = np.random.choice(unique_parent)
+            if (father != mother):
+                child = self.crossover_one(father, mother)
+                children.append(child)
+
         self.population = np.append(parents, children)
 
     def mutation_one(self, layout_string):

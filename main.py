@@ -6,7 +6,7 @@ import sys
 
 REPRODUCTION_RATE = 0.1
 MUTATION_RATE = 0.9
-TEMPLATE = "abcdefghijklmnopqrstuvwxyz:"
+TEMPLATE = ";abcdefghijklmnopqrstuvwxyz"
 
 population = 50
 iteration_limit = 50
@@ -35,9 +35,9 @@ def prepare_data():
     regex = re.compile('[^a-zA-Z]')
     article = regex.sub('', file_content)
 
-    word_freq = [article.count(c) for c in 'abcdefghijklmnopqrstuvwxyz:']
+    word_freq = [article.count(c) for c in TEMPLATE]
     word_rank = np.argsort(word_freq)[::-1]
-    frequencies = np.array(list('abcdefghijklmnopqrstuvwxyz:'))[word_rank].tolist()
+    frequencies = np.array(list(TEMPLATE))[word_rank].tolist()
 
     cost_dict = np.delete(np.delete(np.fromfunction(
         lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
