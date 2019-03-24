@@ -29,7 +29,7 @@ class GA:
         word_rank = np.argsort(word_freq)[::-1]
         self.frequencies = np.array(list(TEMPLATE))[word_rank].tolist()
 
-        self.probabilities = None
+        self.scores = None
 
         cores = mp.cpu_count() - 1
         self.pool = mp.Pool(processes=cores)
@@ -43,9 +43,9 @@ class GA:
         indexes = np.random.permutation(27)
         return ''.join([TEMPLATE[x] for x in indexes])
 
-    def evolve(self, retain_rate=0.2, mutation_rate=0.1):
-        parents = self.selection(retain_rate)
-        best = self.population[np.argmax(self.probabilities)]
+    def evolve(self, retain_rate=0.05, select_rate = 0.15, mutation_rate=0.1):
+        parents = self.selection(retain_rate, select_rate)
+        best = self.population[np.argmin(self.scores)]
         print('the %s th time: %s %s' % (i, best, self.score_one(best)))
 
         self.crossover(parents)
@@ -79,13 +79,14 @@ class GA:
             self.cheat_sheet.append([layout_string,score])
             return score
 
-    def selection(self, reproduction_rate):
-        parents = []
-        scores = np.array(list(self.pool.map(self.score_one_out, self.population)))
-        for i in range(int(reproduction_rate * self.count)):
+    def selection(self, reproduction_rate, select_rate):
+        self.scores = np.array(list(self.pool.map(self.score_one_out, self.population)))
+        top_excellent_index = np.argsort(self.scores)[:int(self.count * reproduction_rate)]
+        parents = self.population[top_excellent_index]
+        for i in range(int(select_rate * self.count)):
             index = np.random.randint(0, self.count, size=5)
-            _, winner = min(zip(scores[index], self.population[index]))
-            parents.append(winner)
+            _, winner = min(zip(self.scores[index], self.population[index]))
+            parents = np.append(parents, winner)
         return np.array(parents)
 
     def crossover_one(self, father, mother):
@@ -126,7 +127,7 @@ class GA:
         return ''.join(temp_list)
 
     def mutation(self, rate):
-        for index in range(self.count):
+        for index in range(int(self.count * 0.2), self.count):
             if np.random.random() < rate:
                 self.population[index] = self.mutation_one(self.population[index])
 
