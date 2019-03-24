@@ -83,7 +83,7 @@ class GA:
         parents = []
         scores = np.array(list(self.pool.map(self.score_one_out, self.population)))
         for i in range(int(reproduction_rate * self.count)):
-            index = np.random.randint(0, self.count, size=int(self.count/10.0))
+            index = np.random.randint(0, self.count, size=5)
             _, winner = min(zip(scores[index], self.population[index]))
             parents.append(winner)
         return np.array(parents)
@@ -108,12 +108,12 @@ class GA:
     def crossover(self, parents):
         children = []
         unique_parent = np.unique(parents)
+        if len(unique_parent) == 1:
+            raise KeyboardInterrupt
         while len(children) < (self.count - len(parents)):
-            father = np.random.choice(unique_parent)
-            mother = np.random.choice(unique_parent)
-            if (father != mother):
-                child = self.crossover_one(father, mother)
-                children.append(child)
+            father,mother = np.random.choice(unique_parent,2,replace=False)
+            child = self.crossover_one(father, mother)
+            children.append(child)
 
         self.population = np.append(parents, children)
 

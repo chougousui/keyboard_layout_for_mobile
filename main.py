@@ -152,6 +152,8 @@ def generate_new():
             crosses[index] = mutation_one(crosses[index])
 
     genotypes = np.append(retains, crosses)
+    if (len(np.unique(genotypes))< population / 10):
+        raise KeyboardInterrupt
     return
 
 
