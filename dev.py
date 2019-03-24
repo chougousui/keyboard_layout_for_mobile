@@ -46,7 +46,7 @@ class GA:
     def evolve(self, retain_rate=0.05, select_rate = 0.15, mutation_rate=0.1):
         parents = self.selection(retain_rate, select_rate)
         best = self.population[np.argmin(self.scores)]
-        print('the %s th time: %s %s' % (i, best, self.score_one(best)))
+        print('the', i, 'th time: ', best, self.score_one(best), len(np.unique(self.population)), '/', self.count)
 
         self.crossover(parents)
         self.mutation(mutation_rate)
