@@ -50,10 +50,17 @@ def myprint(layout_string):
 if __name__ == "__main__":
     init()
     f = open('known_solutions.txt', 'r')
-    for line in f.readlines():
-        regex = re.compile('[^a-zA-Z;]')
-        line = regex.sub('', line)
-        score = score_one(line)
-        myprint(line)
-        print(score)
+    lines = f.readlines()
     f.close()
+
+    regex = re.compile('[^a-zA-Z;]')
+
+    layouts = np.array([regex.sub('', line) for line in lines])
+    scores = np.array([score_one(layout) for layout in layouts])
+
+    layouts = layouts[np.argsort(scores)]
+    scores = np.sort(scores)
+
+    for i in range(len(scores)):
+        myprint(layouts[i])
+        print(scores[i])
