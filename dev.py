@@ -6,6 +6,7 @@ import factoradic
 import bisect
 import sys
 import collections
+from tools import generate_cost_dict
 
 TEMPLATE = ";abcdefghijklmnopqrstuvwxyz"
 
@@ -21,9 +22,7 @@ class GA:
         regex = re.compile('[^a-zA-Z;]')
         self.article = regex.sub('', file_content)
 
-        self.cost_dict = np.delete(np.delete(np.fromfunction(
-            lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
-            (28, 28)), 20, axis=0), 20, axis=1)
+        self.cost_dict = generate_cost_dict()
 
         word_freq = [self.article.count(c) for c in TEMPLATE]
         word_rank = np.argsort(word_freq)[::-1]
@@ -62,11 +61,9 @@ class GA:
             total_distance += self.cost_dict[last_index][index]
             last_index = index
 
-        if key_maps['e'] not in [15, 16, 17]:
-            total_distance *= 1.03
+        # if key_maps['e'] not in [15, 16, 17]:
+        #     total_distance *= 1.03
         if abs(key_maps['t'] - key_maps['h']) > 1:
-            total_distance *= 1.02
-        if key_maps[';'] not in [0,9,10,19]:
             total_distance *= 1.02
 
         return total_distance / 10000
@@ -167,8 +164,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("Interrupted")
     finally:
-        print(ga.population)
-
-    end = time.time()
-
-    print('time cost: %s' % (end - start))
+        print (np.unique(ga.population))
+        end = time.time()
+        print('time cost: %s' % (end - start))

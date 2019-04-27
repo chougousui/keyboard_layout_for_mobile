@@ -1,5 +1,6 @@
 import numpy as np
 import re
+from tools import generate_cost_dict
 
 article = None;
 cost_dict = None;
@@ -15,10 +16,7 @@ def init():
     regex = re.compile('[^a-zA-Z;]')
     article = regex.sub('', file_content)
 
-    cost_dict = np.delete(np.delete(np.fromfunction(
-        lambda i, j: np.sqrt(47 * 47 * np.power((i // 10 - j // 10), 2) + 77 * 77 * np.power((i % 10 - j % 10), 2)),
-        (28, 28)), 20, axis=0), 20, axis=1)
-
+    cost_dict = generate_cost_dict()
 
 def score_one(layout_string):
     key_maps = {val: i for i, val in enumerate(layout_string)}
@@ -31,15 +29,7 @@ def score_one(layout_string):
         total_distance += cost_dict[last_index][index]
         last_index = index
 
-    if key_maps['e'] not in [15, 16, 17]:
-        total_distance *= 1.03
-    if abs(key_maps['t'] - key_maps['h']) > 1:
-        total_distance *= 1.02
-    if key_maps[';'] not in [0, 9, 10, 19]:
-        total_distance *= 1.02
-
     return total_distance / 10000
-
 
 def myprint(layout_string):
     print(' '.join(layout_string[0:10]))
