@@ -39,11 +39,14 @@ class GA:
         return np.array([self.gen_chromosome() for i in range(count)])
 
     def gen_chromosome(self):
+        # 0) Randomly initialize each individual, using string encoding directly
         indexes = np.random.permutation(27)
         return ''.join([TEMPLATE[x] for x in indexes])
 
     def evolve(self, retain_rate=0.05, select_rate = 0.15, mutation_rate=0.1):
         parents = self.selection(retain_rate, select_rate)
+
+        # Show the best individuals at present
         best = self.population[np.argmin(self.scores)]
         print('the', i, 'th time: ', best, self.score_one(best), len(np.unique(self.population)), '/', self.count)
 
@@ -61,10 +64,8 @@ class GA:
             total_distance += self.cost_dict[last_index][index]
             last_index = index
 
-        # if key_maps['e'] not in [15, 16, 17]:
-        #     total_distance *= 1.03
-        if abs(key_maps['t'] - key_maps['h']) > 1:
-            total_distance *= 1.02
+        # if abs(key_maps['t'] - key_maps['h']) > 1:
+        #     total_distance *= 1.02
 
         return total_distance / 10000
 
@@ -77,9 +78,15 @@ class GA:
             return score
 
     def selection(self, reproduction_rate, select_rate):
+        # 1) Calculate the score of each individual
         self.scores = np.array(list(self.pool.map(self.score_one_out, self.population)))
+
+        # 2) Keep some of the best individuals as parents
         top_excellent_index = np.argsort(self.scores)[:int(self.count * reproduction_rate)]
         parents = self.population[top_excellent_index]
+
+        # 3) The rest are selected using the tournament operator
+        #    until the parents reaches the set percentage
         for i in range(int(select_rate * self.count)):
             index = np.random.randint(0, self.count, size=5)
             _, winner = min(zip(self.scores[index], self.population[index]))
@@ -90,13 +97,19 @@ class GA:
         father = np.array(list(father))
         mother = np.array(list(mother))
         child = np.array([''] * 27)
+
+        # Randomly choose intersections
         cross_length = np.random.randint(26) + 1
         high_set = self.frequencies[:cross_length]
         low_set = self.frequencies[cross_length:]
         high_index = [i for i, val in enumerate(father) if val in high_set]
         low_index = [i for i, val in enumerate(mother) if val in low_set]
+
+        # Keep father's high frequency characters and mother's low frequency characters
         child[high_index] = father[high_index]
         child[low_index] = mother[low_index]
+
+        # Supplement the missing characters due to parental character repetition
         left_list = np.array([i for i in TEMPLATE if i not in child])
         space_index = [i for i, val in enumerate(child) if val == '']
         child[space_index] = left_list
@@ -104,6 +117,8 @@ class GA:
         return ''.join(child)
 
     def crossover(self, parents):
+        # 4) Use crossover operators to generate new children,
+        #    until the new population reaches the size of the old population
         children = []
         unique_parent = np.unique(parents)
         if len(unique_parent) == 1:
@@ -124,6 +139,8 @@ class GA:
         return ''.join(temp_list)
 
     def mutation(self, rate):
+        # 5) For these crossover-generated individuals,
+        #    using mutation operators to modify their genes
         for index in range(int(self.count * 0.2), self.count):
             if np.random.random() < rate:
                 self.population[index] = self.mutation_one(self.population[index])
